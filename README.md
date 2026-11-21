@@ -6,29 +6,37 @@ I used a campus library’s charger-lending desk as a running example. It gave m
 
 ## Labs and evidence
 
-I completed the 12 required labs and worked through three optional Basic Patterns labs in the AWS workshop account (`us-west-2`). For S1 and S2, I reused the guardrails from my earlier setup and confirmed that both published versions were ready. The links below go to the relevant walkthrough or the exact screenshot that shows the result.
+I completed the 12 required labs and three optional Basic Patterns labs in the AWS workshop account (`us-west-2`). Each lab links to its own section below, where I describe what I tried and point to the result in a screenshot.
 
 | Lab | What I tested and observed | Where to look |
 |---|---|---|
-| B1 · Text generation | Nova Pro explained office hours for a first-year student. | [Figure 1](#fig-text), B1 row |
+| B1 · Text generation | Nova Pro explained office hours for a first-year student. | [Lab notes](#lab-b1) |
 | B2 · Retrieval-augmented generation | Titan and Chroma retrieved FAQ context that Nova Lite used to answer a question about customer data and model training. | [Walkthrough](#lab-b2) |
 | B3 · Chatbot | The assistant recalled **Library Queue** when I asked for the project name in a second turn. | [Walkthrough](#lab-b3) |
 | I1 · Chatbot with RAG | Nova Pro requested the FAQ tool, received retrieved context, and answered the model-training question. | [Walkthrough](#lab-i1) |
 | I2 · Document summarization | Nova Pro took a PDF and a custom instruction and returned three bullets, including a practical next step. | [Walkthrough](#lab-i2) |
-| I3 · Response streaming | A `ConverseStream` callback received 128 text deltas totaling 1,583 characters in one run. | [Figure 1](#fig-text), I3 row |
-| I4 · Embeddings search | Chroma returned four FAQ hits. The first addressed customer data and model training. | [Figure 1](#fig-text), I4 row |
-| S1 · Console guardrail | The guardrail created in the console had a published version 1 in `READY` status. | [Figure 3](#fig-safeguards), S1 row |
-| S2 · Programmatic guardrail | The guardrail created through the SDK also had a published version 1 in `READY` status. | [Figure 3](#fig-safeguards), S2 row |
+| I3 · Response streaming | A `ConverseStream` callback received 128 text deltas totaling 1,583 characters in one run. | [Lab notes](#lab-i3) |
+| I4 · Embeddings search | Chroma returned four FAQ hits. The first addressed customer data and model training. | [Lab notes](#lab-i4) |
+| S1 · Console guardrail | The guardrail created in the console had a published version 1 in `READY` status. | [Lab notes](#lab-s1) |
+| S2 · Programmatic guardrail | The guardrail created through the SDK also had a published version 1 in `READY` status. | [Lab notes](#lab-s2) |
 | S3 · Invoke models with guardrails | Nova Lite returned `end_turn` for the control and `guardrail_intervened` for a configured word match. | [Walkthrough](#lab-s3) |
-| S4 · Content blocking | The neutral library prompt passed. The synthetic blocked term `AnyCompany` triggered an intervention. | [Figure 3](#fig-safeguards), S4 row |
+| S4 · Content blocking | The neutral library prompt passed. The synthetic blocked term `AnyCompany` triggered an intervention. | [Lab notes](#lab-s4) |
 | S5 · PII masking | The standalone guardrail returned `{NAME}` and `{EMAIL}` in place of the synthetic values. | [Walkthrough](#lab-s5) |
-| S6 · Prompt attack blocking | The public-notice control passed. The filter classified a synthetic formatting override as `PROMPT_ATTACK` and blocked it. | [Figure 3](#fig-safeguards), S6 row |
+| S6 · Prompt attack blocking | The public-notice control passed. The filter classified a synthetic formatting override as `PROMPT_ATTACK` and blocked it. | [Lab notes](#lab-s6) |
 | Bonus 1 · Prompt showcase | The reply template picked up the charger desk and statistics lab details from my sample feedback. | [Walkthrough](#lab-o1) |
 | Bonus 2 · Text generation playground | I generated names with Nova Micro at different temperatures. The browser run produced ChargeSwap, PowerShare, and ChargerSwap. | [Walkthrough](#lab-o2) |
 
 [Basic Patterns](https://catalog.us-east-1.prod.workshops.aws/event/dashboard/en-US/workshop/basic) · [Text Patterns](https://catalog.us-east-1.prod.workshops.aws/event/dashboard/en-US/workshop/intermediate) · [Security & Safeguards](https://catalog.us-east-1.prod.workshops.aws/event/dashboard/en-US/workshop/security-safeguards) · [Bonus Labs](https://catalog.us-east-1.prod.workshops.aws/event/dashboard/en-US/workshop/bonus)
 
 ## Basic Patterns
+
+<a name="lab-b1"></a>
+
+### B1 · Text generation
+
+I used the workshop’s text generation helper to ask Nova Pro for a one-sentence explanation of office hours for a first-year student. This was my baseline for a single-turn request before adding retrieval in B2 or conversation history in B3.
+
+**What I saw.** The B1 row in [Figure 1](#fig-text) shows the answer explaining that students can meet with professors for academic support. Specifying the audience gave the request a clear purpose even without any course material.
 
 <a name="lab-b2"></a>
 
@@ -148,7 +156,39 @@ print(summary)
 
 *Figure 2. I2 shows my custom instruction in the input box and the three bullets generated from the bundled PDF.*
 
+<a name="lab-i3"></a>
+
+### I3 · Response streaming
+
+I asked for three ways a campus library could reduce queues and passed a callback to the workshop’s streaming helper. The callback collected text as it arrived from `ConverseStream`, so I could count the pieces and measure the length of their combined text.
+
+**What I saw.** The I3 row in [Figure 1](#fig-text) records 128 text deltas and 1,583 characters for that run. In a chat UI, I could display those pieces as they arrive and mark the reply complete once the stream ends.
+
+<a name="lab-i4"></a>
+
+### I4 · Embeddings search
+
+I used the same question about customer inputs and model training as in B2 and I1. The search helper embeds the query with Titan and asks Chroma for the nearest entries in the workshop FAQ collection. I inspected the passages on their own to see what a generation step would receive.
+
+**What I saw.** The I4 row in [Figure 1](#fig-text) gives the hit count and the beginning of the first result, an FAQ about whether AWS and third-party model providers use customer inputs or outputs. Seeing the ranked passage made it easier to check whether the search had found the right topic.
+
 ## Security & Safeguards
+
+<a name="lab-s1"></a>
+
+### S1 · Console guardrail
+
+I returned to the guardrail I had set up in the Bedrock console and checked its published version through the Bedrock API. I wanted to confirm that I had a version I could reference by number in later requests.
+
+**What I saw.** The S1 row in [Figure 3](#fig-safeguards) shows that version 1 of the console-created guardrail was `READY`.
+
+<a name="lab-s2"></a>
+
+### S2 · Programmatic guardrail
+
+This lab used the SDK to configure and publish a guardrail. I reused the resource from my earlier setup and checked the published version by ID with the Bedrock API. The SDK workflow makes the policy settings easier to review in code.
+
+**What I saw.** The S2 row in [Figure 3](#fig-safeguards) shows that version 1 of the SDK-created guardrail was `READY`.
 
 <a name="lab-s3"></a>
 
@@ -191,6 +231,14 @@ for prompt, expected in [
 
 **What I saw.** The S3 row in [Figure 3](#fig-safeguards) records `end_turn` for the neutral prompt and `guardrail_intervened` for the word match. This gives the app a reliable response field for deciding when to show the configured blocked message.
 
+<a name="lab-s4"></a>
+
+### S4 · Content blocking
+
+I tested the content-blocking policy directly with `ApplyGuardrail`. I compared a question about renewing a library book with a question about `AnyCompany`, the synthetic term in the workshop’s word list. Testing the policy by itself let me check the rule without running model inference.
+
+**What I saw.** The S4 row in [Figure 3](#fig-safeguards) shows that the ordinary library question passed and the configured term triggered a block.
+
 <a name="lab-s5"></a>
 
 ### S5 · Masking sensitive information in model output
@@ -223,6 +271,14 @@ assert "{NAME}" in masked and "{EMAIL}" in masked
 ```
 
 **What I saw.** The S5 row in [Figure 3](#fig-safeguards) shows the response text with `{NAME}` and `{EMAIL}` in place of the original values. With the same sample marked as input, this configuration returned `NONE`. That difference is a test case I’d keep whenever a policy changes.
+
+<a name="lab-s6"></a>
+
+### S6 · Prompt attack blocking
+
+I tested the guardrail’s prompt attack filter with a neutral request to summarize a public opening-hours notice and a synthetic message that tried to change the requested output format. I checked the policy assessment for the reason behind the decision.
+
+**What I saw.** The S6 row in [Figure 3](#fig-safeguards) records that the control passed and the formatting override was blocked under `PROMPT_ATTACK`. The assessment gave me a way to identify which filter had fired.
 
 <a name="fig-safeguards"></a>
 
